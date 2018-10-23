@@ -1,0 +1,86 @@
+#!/bin/bash
+#
+# archive_dump - compress a file and store it in relevant directory
+
+##### Constants
+#set -x
+DATETIME=$(date +"%Y-%m-%d")
+TIMESTAMP="_$(date +"%Y_%m_%d_%H_%M")"
+
+##### Variables
+filename=
+tarfile=
+
+##### Functions
+
+usage()
+{
+	printf "\nusage: archive_dump [ -f | --file ] | [ -t | --target] | [ -h | --help ]\n"
+}
+
+##### Main
+
+while [ "$1" != "" ]; do
+	case $1 in
+		-f | --file )	shift
+						filename=$1
+						;;
+		-t | --target ) shift
+						targetdir=$1
+						;;
+		-h | --help	)	usage
+						exit 0
+						;;
+		* )				usage
+						exit 0
+	esac
+	shift
+done
+
+# Check if file exists
+if [ "$filename" == "" ]; then
+	echo -n "Missing filename!";
+	usage
+	exit
+fi
+
+tarfile="$filename"
+tarfile+="$TIMESTAMP"
+tarfile+=".tar.gz"
+
+# Check if given argument is a file
+if [ ! -f "$filename" ]; then
+	echo -n "ERROR! $filename does not exist!"
+	echo ""
+	exit
+fi
+
+# Check if given argument is writeable
+if [ ! -w "$filename" ]; then
+	echo -n "ERROR! $filename is not writable!"
+	echo ""
+	exit
+fi
+
+# Check given targetdir
+if [ "$targetdir" == "" ]; then
+	targetdir="$HOME/Code/dump/$DATETIME"
+fi
+
+# Check if Target directory exists
+if [ ! -d "$targetdir" ]; then
+	mkdir $targetdir
+	echo "$targetdir created successfully"
+fi
+
+# Compress file
+tar -czvf $tarfile $filename --remove-files 
+echo "$filename compressed successfully!"
+
+# Move to target directory
+mv $tarfile $targetdir/$tarfile
+echo "$filename moved to $targetdir successfully!"
+echo ""
+exit
+
+#set +x
